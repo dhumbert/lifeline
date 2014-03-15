@@ -1,0 +1,95 @@
+.navigation {
+	font-size: 3em;
+}
+
+.section {
+	margin-bottom: 2em;
+}
+
+.section-header {
+	color: #aaa;
+	text-transform: uppercase;
+	font-size: 0.8em;
+	margin-bottom: 0.5em;
+}
+
+.section-content ul {
+	padding: 0;
+	list-style-type: none;
+}
+
+.mood-group {
+	
+}
+
+.mood-label-left {
+	text-align: left;
+	padding-left: 0;
+	padding-bottom: 0.25em;
+}
+
+.mood-slider {
+	margin-top: 0.5em;
+}
+.mood-slider input {
+	border-radius: 6px;
+    height: 6px;
+	-webkit-appearance: none;
+    -moz-appearance: none;
+	background-image: -webkit-gradient(
+        linear,
+        left top,
+        right top,
+        color-stop(0.5, #f0ad4e),
+        color-stop(0.5, #C5C5C5)
+    );
+}
+
+.mood-slider input::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    background-color: #E9E9E9;
+    border: 1px solid #CECECE;
+    height: 15px;
+    width: 15px;
+}
+
+.mood-slider input:focus { outline: none; }
+
+.mood-label-right {
+	text-align: right;
+	padding-right: 0;
+}
+
+#save-moods-btn {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+#section-daily-log textarea {
+	width: 100%;
+	height: 10em;
+}
+
+#section-calendar time {
+	font-size: 0.8em;
+	text-transform: uppercase;
+	color: #aaa;
+}
+
+.previous-mood-nav.disabled .glyphicon {
+	color: #aaa;
+	cursor: not-allowed;
+}
+
+#previous-mood-time {
+	text-align: center;
+	font-size: 2em;
+}
+
+#previous-mood-time-previous {
+	margin-right: 1em;
+}
+
+#previous-mood-time-next {
+	margin-left: 1em;
+}
