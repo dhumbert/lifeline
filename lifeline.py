@@ -1,5 +1,6 @@
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
+from functools import partial
 from datetime import date
 from flask import Flask, render_template, redirect, request, session, url_for
 import model
@@ -22,36 +23,22 @@ def today():
 @app.route('/<int:year>/<int:month>/<int:day>')
 def date_view(year, month, day):
     currentDate = dateutil.parser.parse("{}-{}-{}".format(year, month, day), yearfirst=True).date()
-    currentDateFormatted = model.get_current_day_formatted(currentDate)
-    datePagination = get_date_pagination(currentDate)
 
-    isToday = currentDate == date.today()
+    dayObj = model.Day(currentDate)
 
-    notes = model.get_notes(currentDate)
-    events = model.get_calendar_events(currentDate)
+    datePagination = dayObj.get_date_pagination(partial(url_for, 'date_view'))
 
-    data = model.get_data_for_date(currentDate)
+    notes = dayObj.get_notes()
+    events = dayObj.get_events()
 
-    if data:
-        data_template = render_template('data.html', data=data)
-    else:
-        data_template = render_template('data_empty.html')
+    data_template = dayObj.get_data_template(render_template)
 
     return render_template('day.html', data_template=data_template,
+                           day=dayObj,
                            notes=notes, events=events,
-                           isToday=isToday, currentDate=currentDate,
-                           currentDateFormatted=currentDateFormatted,
+                           currentDate=currentDate,
                            datePagination=datePagination)
 
-
-def get_date_pagination(currentDate):
-    previousDate = currentDate + relativedelta(days=-1)
-    nextDate = currentDate + relativedelta(days=+1)
-
-    return {
-        'previous': url_for('date_view', year=previousDate.year, month=previousDate.month, day=previousDate.day),
-        'next': url_for('date_view', year=nextDate.year, month=nextDate.month, day=nextDate.day),
-    }
 
 
 @app.route('/google-auth')

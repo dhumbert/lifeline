@@ -1,7 +1,8 @@
-from flask import session, redirect, url_for, render_template
+from flask import session, redirect, url_for
 import dateutil.parser
 import couchdb
 from dateutil.relativedelta import relativedelta
+from datetime import date
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 from evernote.edam.type.ttypes import Note, NoteSortOrder
 from evernote.api.client import EvernoteClient
@@ -19,76 +20,130 @@ def date_parse(f):
     @wraps(f)
     def wrapper(dateToParse):
         parsedDate = dateToParse
-        if isinstance(dateToParse, (str, unicode)):
-            parsedDate = dateutil.parser.parse(dateToParse)
+
 
         return f(parsedDate)
 
     return wrapper
 
 
-@cache_it(expire=settings.CACHE_EXPIRY)
-@date_parse
-def get_notes(currentDate):
-    searchDateLowerLimit = currentDate.strftime("%Y%m%d")
-    searchDateUpperLimit = (currentDate + relativedelta(days=+1)).strftime("%Y%m%d")
+class Day:
+    def __init__(self, currentDate):
+        if isinstance(currentDate, (str, unicode)):
+            currentDate = dateutil.parser.parse(currentDate)
 
-    foundNotes = _find_evernote_notes("created:{} -created:{}".format(searchDateLowerLimit, searchDateUpperLimit))
+        self._date = currentDate
+        self._data = self._load_data_from_db()
 
-    notes = []
-    for note in foundNotes:
-        notes.append((note.guid, note.title))
+    def is_today(self):
+        return self._date == date.today()
 
-    return notes
+    @cache_it(expire=settings.CACHE_EXPIRY)
+    def _load_data_from_db(self):
+        db = _get_couchdb_connection()
+        return db.get(_make_doc_id(self._date))
 
+    @cache_it(expire=settings.CACHE_EXPIRY)
+    def get_notes(self):
+        if not self.is_today():  # if it's today, keep loading fresh
+            if self._data:  # if we have data in db
+                return self._data['notes']  # just return data from db
 
-@cache_it(expire=settings.CACHE_EXPIRY)
-@date_parse
-def get_calendar_events(currentDate):
-    # google calendar
-    credentials = OAuth2Credentials.from_json(session['credentials'])
+        return self._get_notes_from_source()
 
-    if credentials == None:
-        return redirect(url_for('login'))
+    def _get_notes_from_source(self):
+        searchDateLowerLimit = self._date.strftime("%Y%m%d")
+        searchDateUpperLimit = (self._date + relativedelta(days=+1)).strftime("%Y%m%d")
 
-    searchDateLowerLimit = currentDate.strftime("%Y-%m-%dT00:00:00{}".format(settings.TIMEZONE_OFFSET))
-    searchDateUpperLimit = currentDate.strftime("%Y-%m-%dT23:59:59{}".format(settings.TIMEZONE_OFFSET))
+        foundNotes = _find_evernote_notes("created:{} -created:{}".format(searchDateLowerLimit, searchDateUpperLimit))
 
-    # https://developers.google.com/apis-explorer/#s/calendar/v3/calendar.events.list
-    http = httplib2.Http()
-    http = credentials.authorize(http)
-    service = build("calendar", "v3", http=http)
-    apiEvents = service.events().list(calendarId='primary', singleEvents=True, showDeleted=False, fields='items(description,htmlLink,kind,location,start,summary)', timeMin=searchDateLowerLimit, timeMax=searchDateUpperLimit).execute()['items']
+        notes = []
+        for note in foundNotes:
+            notes.append((note.guid, note.title))
 
-    events = []
+        return notes
 
-    for event in apiEvents:
-        if 'date' in event['start']:  # all day events
-            eventTime = 'all day'
-            sortTime = -1
-            if event['start']['date'] != currentDate.strftime("%Y-%m-%d"):
-                continue  # for some reason the google API apparently doesn't respect timezone for all day events?
+    @cache_it(expire=settings.CACHE_EXPIRY)
+    def get_events(self):
+        if not self.is_today():  # if it's today, keep loading fresh
+            if self._data:  # if we have data in db
+                return self._data['events']  # just return data from db
+
+        return self._get_events_from_source()
+
+    def _get_events_from_source(self):
+        # google calendar
+        credentials = OAuth2Credentials.from_json(session['credentials'])
+
+        if credentials == None:
+            return redirect(url_for('login'))
+
+        searchDateLowerLimit = self._date.strftime("%Y-%m-%dT00:00:00{}".format(settings.TIMEZONE_OFFSET))
+        searchDateUpperLimit = self._date.strftime("%Y-%m-%dT23:59:59{}".format(settings.TIMEZONE_OFFSET))
+
+        # https://developers.google.com/apis-explorer/#s/calendar/v3/calendar.events.list
+        http = httplib2.Http()
+        http = credentials.authorize(http)
+        service = build("calendar", "v3", http=http)
+        apiEvents = service.events().list(calendarId='primary', singleEvents=True, showDeleted=False, fields='items(description,htmlLink,kind,location,start,summary)', timeMin=searchDateLowerLimit, timeMax=searchDateUpperLimit).execute()['items']
+
+        events = []
+
+        for event in apiEvents:
+            if 'date' in event['start']:  # all day events
+                eventTime = 'all day'
+                sortTime = -1
+                if event['start']['date'] != self._date.strftime("%Y-%m-%d"):
+                    continue  # for some reason the google API apparently doesn't respect timezone for all day events?
+            else:
+                parsedTime = dateutil.parser.parse(event['start']['dateTime'])
+
+                eventTime = parsedTime.strftime("%I").lstrip("0")
+
+                if int(parsedTime.strftime("%M")) > 0:
+                    eventTime = eventTime + ":" + parsedTime.strftime("%M")
+
+                eventTime = eventTime + parsedTime.strftime("%p")[0].lower()
+                sortTime = int(parsedTime.strftime("%s"))
+
+            e = {'title': event['summary'],
+                 'description': event['description'] if 'description' in event else '',
+                 'link': event['htmlLink'],
+                 'location': event['location'] if 'location' in event else '',
+                 'time': eventTime,
+                 'sortTime': sortTime}
+
+            events.append(e)
+
+        return sorted(events, key=lambda x: x['sortTime'])
+
+    def get_data_template(self, render_cb):
+        if self._data:
+            data_template = render_cb('data.html', data=self._data)
         else:
-            parsedTime = dateutil.parser.parse(event['start']['dateTime'])
+            data_template = render_cb('data_empty.html')
 
-            eventTime = parsedTime.strftime("%I").lstrip("0")
+        return data_template
 
-            if int(parsedTime.strftime("%M")) > 0:
-                eventTime = eventTime + ":" + parsedTime.strftime("%M")
+    def get_formatted(self):
+        return "{} {} {}, {}".format(
+            self._date.strftime("%A"),
+            self._date.strftime("%B"),
+            self._date.strftime("%d").lstrip("0"),
+            self._date.strftime("%Y"))
 
-            eventTime = eventTime + parsedTime.strftime("%p")[0].lower()
-            sortTime = int(parsedTime.strftime("%s"))
+    def get_date_pagination(self, url_cb):
+        previousDate = self._date + relativedelta(days=-1)
+        nextDate = self._date + relativedelta(days=+1)
 
-        e = {'title': event['summary'],
-             'description': event['description'] if 'description' in event else '',
-             'link': event['htmlLink'],
-             'location': event['location'] if 'location' in event else '',
-             'time': eventTime,
-             'sortTime': sortTime}
+        return {
+            'previous': url_cb(year=previousDate.year, month=previousDate.month, day=previousDate.day),
+            'next': url_cb(year=nextDate.year, month=nextDate.month, day=nextDate.day),
+        }
 
-        events.append(e)
 
-    return sorted(events, key=lambda x: x['sortTime'])
+
+
 
 
 def save(values):
@@ -132,12 +187,6 @@ def invalidate_cache():
     cache.expire_all_in_set()
 
 
-@cache_it(expire=settings.CACHE_EXPIRY)
-def get_data_for_date(date):
-    db = _get_couchdb_connection()
-    return db.get(_make_doc_id(date))
-
-
 def _make_doc_id(date):
     username = "dhumbert"
     return "{}/{}".format(username, date)
@@ -165,9 +214,3 @@ def _get_couchdb_connection():
     return couch[settings.COUCHDB_DB]
 
 
-def get_current_day_formatted(currentDate):
-    return "{} {} {}, {}".format(
-        currentDate.strftime("%A"),
-        currentDate.strftime("%B"),
-        currentDate.strftime("%d").lstrip("0"),
-        currentDate.strftime("%Y"))

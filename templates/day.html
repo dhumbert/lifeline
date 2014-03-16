@@ -29,14 +29,14 @@
         <div class="navigation">
             <a href="{{ datePagination['previous'] }}" class="pull-left"><span class="glyphicon glyphicon-circle-arrow-left"></span></a>
             <div class="pull-right">
-                <a class="{% if isToday %}disabled{% endif %}" href="{% if isToday %}#{% else %}{{ datePagination['next'] }}{% endif %}"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
-                <a class="{% if isToday %}disabled{% endif %}" href="{% if isToday %}#{% else %}{{ url_for('today') }}{% endif %}" title="Today"><span class="glyphicon glyphicon-record"></span></a>
+                <a class="{% if day.is_today() %}disabled{% endif %}" href="{% if day.is_today() %}#{% else %}{{ datePagination['next'] }}{% endif %}"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
+                <a class="{% if day.is_today() %}disabled{% endif %}" href="{% if day.is_today() %}#{% else %}{{ url_for('today') }}{% endif %}" title="Today"><span class="glyphicon glyphicon-record"></span></a>
             </div>
             <div class="text-center">
-                {% if isToday %}
-                    <h1 data-toggle="popover" data-content="{{ currentDateFormatted }}">Today</h1>
+                {% if day.is_today() %}
+                    <h1 data-toggle="popover" data-content="{{ day.get_formatted() }}">Today</h1>
                 {% else %}
-                    <h1>{{ currentDateFormatted }}</h1>
+                    <h1>{{ day.get_formatted() }}</h1>
                 {% endif %}
             </div>
         </div>
