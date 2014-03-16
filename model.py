@@ -6,6 +6,7 @@ from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 from evernote.edam.type.ttypes import Note, NoteSortOrder
 from evernote.api.client import EvernoteClient
 from redis_cache import cache_it, SimpleCache
+from functools import wraps
 import settings
 
 # google api
@@ -14,7 +15,20 @@ from oauth2client.client import OAuth2Credentials
 import httplib2
 
 
+def date_parse(f):
+    @wraps(f)
+    def wrapper(dateToParse):
+        parsedDate = dateToParse
+        if isinstance(dateToParse, (str, unicode)):
+            parsedDate = dateutil.parser.parse(dateToParse)
+
+        return f(parsedDate)
+
+    return wrapper
+
+
 @cache_it(expire=settings.CACHE_EXPIRY)
+@date_parse
 def get_notes(currentDate):
     searchDateLowerLimit = currentDate.strftime("%Y%m%d")
     searchDateUpperLimit = (currentDate + relativedelta(days=+1)).strftime("%Y%m%d")
@@ -29,6 +43,7 @@ def get_notes(currentDate):
 
 
 @cache_it(expire=settings.CACHE_EXPIRY)
+@date_parse
 def get_calendar_events(currentDate):
     # google calendar
     credentials = OAuth2Credentials.from_json(session['credentials'])
@@ -99,6 +114,8 @@ def save(values):
         '_id': doc_id,
         'checklist': checklist,
         'textboxes': textboxes,
+        'events': get_calendar_events(values['date']),
+        'notes': get_notes(values['date']),
         'format': "v1",  # to make it easy to migrate documents if structure changes
     }
 
