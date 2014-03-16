@@ -1,5 +1,6 @@
-from flask import session, redirect, url_for
+from flask import session
 import dateutil.parser
+from datetime import datetime
 import couchdb
 from dateutil.relativedelta import relativedelta
 from datetime import date
@@ -11,10 +12,10 @@ from lib import libevernote, libgcal
 class Day:
     def __init__(self, currentDate):
         if isinstance(currentDate, (str, unicode)):
-            currentDate = dateutil.parser.parse(currentDate)
+            currentDate = dateutil.parser.parse(currentDate).date()
 
         self._date = currentDate
-        self._data = None #self._load_data_from_db()
+        self._data = self._load_data_from_db()
 
     def is_today(self):
         return self._date == date.today()
@@ -46,6 +47,12 @@ class Day:
     def _get_events_from_source(self):
         return libgcal.get_events(self._date, session['credentials'])
 
+    def get_moods(self):
+        if self._data and 'moods' in self._data:
+            return sorted(self._data['moods'], key=lambda x: x['sortTime'])
+        else:
+            return []
+
     def get_data_template(self, render_cb):
         if self._data:
             data_template = render_cb('data.html', data=self._data)
@@ -76,7 +83,7 @@ class Day:
         }
 
     def save(self, values):
-        values = dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
+        values = _unpack_form_data(values)
 
         doc_id = _make_doc_id(values['date'])
 
@@ -110,10 +117,60 @@ class Day:
         db.save(data)
         invalidate_cache()
 
+    def save_mood(self, values):
+        doc_id = _make_doc_id(values['date'])
+        values = _unpack_form_data(values)
+
+        del values['date']
+
+        notes = values['notes']
+        del values['notes']
+
+        if not self._data:
+            self._data = {}
+
+        now = datetime.now()
+        moodTime = now.strftime("%I").lstrip("0")
+
+        if int(now.strftime("%M")) > 0:
+            moodTime = moodTime + ":" + now.strftime("%M")
+
+        moodTime = moodTime + now.strftime("%p")[0].lower()
+
+        sortTime = int(now.strftime("%s"))
+
+        if 'moods' not in self._data:
+            self._data['moods'] = []
+
+        moodHash = {
+            'time': moodTime,
+            'sortTime': sortTime,
+            'notes': notes,
+            'values': {}
+        }
+
+        for mood, value in values.iteritems():
+             moodHash['values'][mood] = int(value)
+
+        self._data['moods'].append(moodHash)
+
+        db = _get_couchdb_connection()
+        doc = db.get(doc_id)
+        if doc and '_rev' in doc:
+            self._data['_rev'] = doc['_rev']
+
+        db.save(self._data)
+        invalidate_cache()
+
+
 
 def invalidate_cache():
     cache = SimpleCache(hashkeys=True, namespace=invalidate_cache.__module__)
     cache.expire_all_in_set()
+
+
+def _unpack_form_data(values):
+    return dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
 
 
 def _make_doc_id(date):

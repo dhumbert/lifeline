@@ -81,43 +81,29 @@
 
     <div class="col-md-3">
         <div class="section" id="section-mood">
-            <div class="section-header">Mood</div>
-            <div class="section-content">
-                <div class="mood-group">
-                    <div class="col-md-6 pull-left mood-label-left">Depressed</div>
-                    <div class="col-md-6 pull-right mood-label-right">Interested</div>
-                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+            <form accept-charset="UTF-8" method="post" id="form-mood">
+                <input type="hidden" name="date" value="{{ day.get_formatted("%Y-%m-%d") }}">
+
+                <div class="section-header">Mood</div>
+                <div class="section-content">
+                    {% for mood in moods %}
+                        <div class="mood-group">
+                            <div class="col-md-6 pull-left mood-label-left">{{ mood[0] }}</div>
+                            <div class="col-md-6 pull-right mood-label-right">{{ mood[1] }}</div>
+                            <div class="mood-slider">
+                                <input type="range" min="0" value="50" max="100" step="1" name="{{ mood[0] }}|{{ mood[1] }}">
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <input type="text" name="notes" id="mood-notes" class="form-control" placeholder="notes">
+
+                    <button id="save-mood-btn" class="btn btn-block btn-primary"><span class="glyphicon glyphicon-check"></span> <span id="save-mood-btn-label">Save Mood</span></button>
+
+                    <a href="#" class="hide" id="previous-moods" data-toggle="modal" data-target="#previous-mood-modal">
+                        <span class="glyphicon glyphicon-repeat"></span> Previous Mood Entries</a>
                 </div>
-
-                <div class="mood-group">
-                    <div class="col-md-6 pull-left mood-label-left">Sad</div>
-                    <div class="col-md-6 pull-right mood-label-right">Happy</div>
-                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
-                </div>
-
-                <div class="mood-group">
-                    <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
-                    <div class="col-md-6 pull-right mood-label-right">Social</div>
-                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
-                </div>
-
-                <div class="mood-group">
-                    <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
-                    <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
-                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
-                </div>
-
-                <div class="mood-group">
-                    <div class="col-md-6 pull-left mood-label-left">Worthless</div>
-                    <div class="col-md-6 pull-right mood-label-right">Valuable</div>
-                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
-                </div>
-
-                <button type="button" id="save-moods-btn" class="btn btn-block btn-primary"><span class="glyphicon glyphicon-check"></span> Save Mood</button>
-
-                <a href="#" id="previous-moods" data-toggle="modal" data-target="#previous-mood-modal">
-                    <span class="glyphicon glyphicon-repeat"></span> Previous Mood Entries</a>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -136,84 +122,23 @@
                 </div>
             </div>
             <div class="modal-body">
+                {% for mood_entry in day.get_moods() %}
+                    <div class="previous-mood-panel hide" data-time="{{ mood_entry.time }}">
+                        <p class="text-center"><em>{{ mood_entry['notes'] }}</em></p>
 
-                <div class="previous-mood-panel hide" data-time="3:15p">
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Depressed</div>
-                        <div class="col-md-6 pull-right mood-label-right">Interested</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 70%"></div></div>
+                        {% for mood, value in mood_entry['values'].iteritems() %}
+                            {% set left, right = mood.split("|") %}
+                            <div class="previous-mood-row">
+                                <div class="col-md-6 pull-left mood-label-left">{{ left }}</div>
+                                <div class="col-md-6 pull-right mood-label-right">{{ right }}</div>
+                                <div style="clear:both"></div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-{% if value >= 75 %}success{% elif value >= 50 %}warning{% else %}danger{% endif %}" role="progressbar" style="width: {{ value }}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Sad</div>
-                        <div class="col-md-6 pull-right mood-label-right">Happy</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 40%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
-                        <div class="col-md-6 pull-right mood-label-right">Social</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 10%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
-                        <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 95%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Worthless</div>
-                        <div class="col-md-6 pull-right mood-label-right">Valuable</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 55%"></div></div>
-                    </div>
-
-                </div>
-
-                <div class="previous-mood-panel active" data-time="5:30p">
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Depressed</div>
-                        <div class="col-md-6 pull-right mood-label-right">Interested</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 40%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Sad</div>
-                        <div class="col-md-6 pull-right mood-label-right">Happy</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 80%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
-                        <div class="col-md-6 pull-right mood-label-right">Social</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 75%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
-                        <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 70%"></div></div>
-                    </div>
-
-                    <div class="previous-mood-row">
-                        <div class="col-md-6 pull-left mood-label-left">Worthless</div>
-                        <div class="col-md-6 pull-right mood-label-right">Valuable</div>
-                        <div style="clear:both"></div>
-                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 5%"></div></div>
-                    </div>
-
-                </div>
-
-
+                {% endfor %}
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->

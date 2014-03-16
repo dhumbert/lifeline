@@ -11,6 +11,14 @@ COUCHDB_USER = ""
 COUCHDB_PASS = ""
 COUCHDB_DB = ""
 
+MOODS = [
+    ("Depressed", "Interested"),
+    ("Sad", "Happy"),
+    ("Withdrawn", "Social"),
+    ("Hopeless", "Hopeful"),
+    ("Worthless", "Valuable"),
+]
+
 try:
     from local_settings import *
 except ImportError:

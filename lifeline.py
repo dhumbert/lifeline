@@ -36,7 +36,8 @@ def date_view(year, month, day):
                            data_template=data_template,
                            day=dayObj,
                            notes=notes, events=events,
-                           date_pagination=date_pagination)
+                           date_pagination=date_pagination,
+                           moods=settings.MOODS)
 
 
 
@@ -82,6 +83,12 @@ def google_auth_callback():
 @app.route('/ajax/save', methods=['POST'])
 def ajax_save():
     model.Day(request.form['date']).save(dict(request.form))
+    return "true"
+
+
+@app.route('/ajax/save-mood', methods=['POST'])
+def ajax_save_mood():
+    model.Day(request.form['date']).save_mood(dict(request.form))
     return "true"
 
 

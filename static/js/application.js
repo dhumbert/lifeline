@@ -1,4 +1,13 @@
 jQuery(document).ready(function($){
+    //------------------------------ PREVIOUS MOOD ACTIVATION
+    var previousMoods = $('.previous-mood-panel');
+    if (previousMoods.length) {
+        var last = previousMoods.last();
+        last.removeClass('hide').addClass('active');
+        $('#previous-mood-time').find('time').text(last.data('time'));
+        $('#previous-moods').removeClass('hide');
+    }
+    //------------------------------ END PREVIOUS MOOD ACTIVATION
     //------------------------------ PREVIOUS MOOD NAVIGATION
     $('#previous-mood-time-previous').on('click', function(){
         if (!$(this).hasClass('disabled')) change_mood('previous');
@@ -103,10 +112,27 @@ jQuery(document).ready(function($){
         return false;
     });
     //----------------------- END SAVE ALL
+    //----------------------- SAVE MOOD
+    $('#form-mood').on('submit', function(){
+        var save_btn = $('#save-mood-btn');
+        save_btn.attr('disabled', 'disabled');
+
+        var save_btn_label = $('#save-mood-btn-label');
+        save_btn_label.text("Saving...");
+
+        $.post('/ajax/save-mood', $(this).serialize(), function(){
+            save_btn.removeAttr('disabled');
+            save_btn_label.text("Save Mood");
+
+        });
+
+        return false;
+    });
+    //----------------------- END SAVE MOOD
     //----------------------- AUTOSAVE
-    setInterval(function(){
-        $('#form-sections').submit();
-    }, 60 * 1000); // autosave every 60 seconds
+//    setInterval(function(){
+//        $('#form-sections').submit();
+//    }, 60 * 1000); // autosave every 60 seconds
     //----------------------- END AUTOSAVE
 
 
