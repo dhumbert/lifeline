@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
+
+    <title>LifeLine</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <div class="navigation">
+            <a href="{{ datePagination['previous'] }}" class="pull-left"><span class="glyphicon glyphicon-circle-arrow-left"></span></a>
+            <div class="pull-right">
+                <a class="{% if isToday %}disabled{% endif %}" href="{% if isToday %}#{% else %}{{ datePagination['next'] }}{% endif %}"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
+                <a class="{% if isToday %}disabled{% endif %}" href="{% if isToday %}#{% else %}{{ url_for('today') }}{% endif %}" title="Today"><span class="glyphicon glyphicon-record"></span></a>
+            </div>
+            <div class="text-center">
+                {% if isToday %}
+                    <h1 data-toggle="popover" data-content="{{ currentDateFormatted }}">Today</h1>
+                {% else %}
+                    <h1>{{ currentDateFormatted }}</h1>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="col-md-3">
+        <div class="section" id="section-calendar">
+            <div class="section-header">Calendar</div>
+            <div class="section-content">
+                <ul>
+                    {% for event in events %}
+                    <li><time>{{ event['time'] }}</time> <a target="_blank" href="{{ event['link'] }}" data-toggle="popover" data-description="{{ event['description'] }}" data-location="{{ event['location'] }}">{{ event['title'] }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="section" id="section-evernote">
+            <div class="section-header">Evernote</div>
+            <div class="section-content">
+                <ul>
+                    {% for note in notes %}
+                        <li><a target="_blank" href="https://sandbox.evernote.com/Home.action#n={{ note[0] }}">{{ note[1] }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="section" id="section-daily-log">
+            <div class="section-header">Daily Log</div>
+            <div class="section-content">
+                <textarea></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="section" id="section-mood">
+            <div class="section-header">Mood</div>
+            <div class="section-content">
+                <div class="mood-group">
+                    <div class="col-md-6 pull-left mood-label-left">Depressed</div>
+                    <div class="col-md-6 pull-right mood-label-right">Interested</div>
+                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+                </div>
+
+                <div class="mood-group">
+                    <div class="col-md-6 pull-left mood-label-left">Sad</div>
+                    <div class="col-md-6 pull-right mood-label-right">Happy</div>
+                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+                </div>
+
+                <div class="mood-group">
+                    <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
+                    <div class="col-md-6 pull-right mood-label-right">Social</div>
+                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+                </div>
+
+                <div class="mood-group">
+                    <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
+                    <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
+                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+                </div>
+
+                <div class="mood-group">
+                    <div class="col-md-6 pull-left mood-label-left">Worthless</div>
+                    <div class="col-md-6 pull-right mood-label-right">Valuable</div>
+                    <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
+                </div>
+
+                <button type="button" id="save-moods-btn" class="btn btn-block btn-primary"><span class="glyphicon glyphicon-check"></span> Save</button>
+
+                <a href="#" id="previous-moods" data-toggle="modal" data-target="#previous-mood-modal">
+                    <span class="glyphicon glyphicon-repeat"></span> Previous Mood Entries</a>
+            </div>
+        </div>
+    </div>
+
+
+</div><!-- /.container -->
+
+<div id="previous-mood-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div id="previous-mood-time">
+                    <a class="previous-mood-nav" id="previous-mood-time-previous" href="#"><span class="glyphicon glyphicon-circle-arrow-left"></span></a>
+                    <time>5:30p</time>
+                    <a class="previous-mood-nav disabled" id="previous-mood-time-next" href="#"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
+                </div>
+            </div>
+            <div class="modal-body">
+
+                <div class="previous-mood-panel hide" data-time="3:15p">
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Depressed</div>
+                        <div class="col-md-6 pull-right mood-label-right">Interested</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 70%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Sad</div>
+                        <div class="col-md-6 pull-right mood-label-right">Happy</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 40%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
+                        <div class="col-md-6 pull-right mood-label-right">Social</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 10%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
+                        <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 95%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Worthless</div>
+                        <div class="col-md-6 pull-right mood-label-right">Valuable</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 55%"></div></div>
+                    </div>
+
+                </div>
+
+                <div class="previous-mood-panel active" data-time="5:30p">
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Depressed</div>
+                        <div class="col-md-6 pull-right mood-label-right">Interested</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 40%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Sad</div>
+                        <div class="col-md-6 pull-right mood-label-right">Happy</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 80%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Withdrawn</div>
+                        <div class="col-md-6 pull-right mood-label-right">Social</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width: 75%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Hopeless</div>
+                        <div class="col-md-6 pull-right mood-label-right">Hopeful</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width: 70%"></div></div>
+                    </div>
+
+                    <div class="previous-mood-row">
+                        <div class="col-md-6 pull-left mood-label-left">Worthless</div>
+                        <div class="col-md-6 pull-right mood-label-right">Valuable</div>
+                        <div style="clear:both"></div>
+                        <div class="progress"><div class="progress-bar progress-bar-danger" role="progressbar" style="width: 5%"></div></div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="{{ url_for('static', filename='js/application.js') }}"></script>
+</body>
+</html>
