@@ -1,5 +1,4 @@
 import dateutil.parser
-from dateutil.relativedelta import relativedelta
 from functools import partial
 from datetime import date
 from flask import Flask, render_template, redirect, request, session, url_for
