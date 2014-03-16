@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 from evernote.edam.type.ttypes import Note, NoteSortOrder
 from evernote.api.client import EvernoteClient
-from redis_cache import cache_it
+from redis_cache import cache_it, SimpleCache
 import settings
 
 # google api
@@ -107,9 +107,15 @@ def save(values):
         data['_rev'] = doc['_rev']
 
     db.save(data)
+    invalidate_cache()
 
 
-# @cache_it(expire=settings.CACHE_EXPIRY)
+def invalidate_cache():
+    cache = SimpleCache(hashkeys=True, namespace=invalidate_cache.__module__)
+    cache.expire_all_in_set()
+
+
+@cache_it(expire=settings.CACHE_EXPIRY)
 def get_data_for_date(date):
     db = _get_couchdb_connection()
     return db.get(_make_doc_id(date))
