@@ -1,9 +1,9 @@
-import json
-from flask import session, redirect, url_for
+from flask import session, redirect, url_for, render_template
 import dateutil.parser
+import couchdb
 from dateutil.relativedelta import relativedelta
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
-from evernote.edam.type.ttypes import NoteSortOrder
+from evernote.edam.type.ttypes import Note, NoteSortOrder
 from evernote.api.client import EvernoteClient
 from redis_cache import cache_it
 import settings
@@ -19,14 +19,10 @@ def get_notes(currentDate):
     searchDateLowerLimit = currentDate.strftime("%Y%m%d")
     searchDateUpperLimit = (currentDate + relativedelta(days=+1)).strftime("%Y%m%d")
 
-    client = EvernoteClient(token=settings.EVERNOTE_DEV_TOKEN)
-    noteStore = client.get_note_store()
-    filter = NoteFilter(words="created:{} -created:{}".format(searchDateLowerLimit, searchDateUpperLimit), order=NoteSortOrder.CREATED)
-    spec = NotesMetadataResultSpec(includeTitle=True)
+    foundNotes = _find_evernote_notes("created:{} -created:{}".format(searchDateLowerLimit, searchDateUpperLimit))
 
-    noteMetadata = noteStore.findNotesMetadata(settings.EVERNOTE_DEV_TOKEN, filter, 0, 50, spec)
     notes = []
-    for note in noteMetadata.notes:
+    for note in foundNotes:
         notes.append((note.guid, note.title))
 
     return notes
@@ -78,6 +74,72 @@ def get_calendar_events(currentDate):
         events.append(e)
 
     return sorted(events, key=lambda x: x['sortTime'])
+
+
+def save(values):
+    values = dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
+
+    doc_id = _make_doc_id(values['date'])
+
+    db = _get_couchdb_connection()
+
+    checklist = [
+        ["fast_food", "Fast Food", 'fast_food' in values],
+        ["exercise", "Exercise", 'exercise' in values],
+        ["meditation", "Meditation", 'meditation' in values],
+    ]
+
+    textboxes = [
+        ["happenings", "Anything interesting happen today?", values['happenings']],
+        ["improvement", "How are you better today than you were yesterday?", values['improvement']],
+        ["reflection", "Reflection", values['reflection']],
+    ]
+
+    data = {
+        '_id': doc_id,
+        'checklist': checklist,
+        'textboxes': textboxes,
+        'format': "v1",  # to make it easy to migrate documents if structure changes
+    }
+
+    doc = db.get(doc_id)
+    if doc and '_rev' in doc:
+        data['_rev'] = doc['_rev']
+
+    db.save(data)
+
+
+# @cache_it(expire=settings.CACHE_EXPIRY)
+def get_data_for_date(date):
+    db = _get_couchdb_connection()
+    return db.get(_make_doc_id(date))
+
+
+def _make_doc_id(date):
+    username = "dhumbert"
+    return "{}/{}".format(username, date)
+
+
+def _get_evernote_note_store():
+    client = EvernoteClient(token=settings.EVERNOTE_DEV_TOKEN)
+    return client.get_note_store()
+
+
+def _find_evernote_notes(words):
+    noteStore = _get_evernote_note_store()
+    filter = NoteFilter(words=words, order=NoteSortOrder.CREATED)
+    spec = NotesMetadataResultSpec(includeTitle=True)
+
+    noteMetadata = noteStore.findNotesMetadata(settings.EVERNOTE_DEV_TOKEN, filter, 0, 50, spec)
+
+    return noteMetadata.notes
+
+
+def _get_couchdb_connection():
+    couch = couchdb.Server(settings.COUCHDB_SERVER)
+    couch.resource.credentials = (settings.COUCHDB_USER, settings.COUCHDB_PASS)
+
+    return couch[settings.COUCHDB_DB]
 
 
 def get_current_day_formatted(currentDate):

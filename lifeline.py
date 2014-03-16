@@ -30,7 +30,18 @@ def date_view(year, month, day):
     notes = model.get_notes(currentDate)
     events = model.get_calendar_events(currentDate)
 
-    return render_template('day.html', notes=notes, events=events, isToday=isToday, currentDateFormatted=currentDateFormatted, datePagination=datePagination)
+    data = model.get_data_for_date(currentDate)
+
+    if data:
+        data_template = render_template('data.html', data=data)
+    else:
+        data_template = render_template('data_empty.html')
+
+    return render_template('day.html', data_template=data_template,
+                           notes=notes, events=events,
+                           isToday=isToday, currentDate=currentDate,
+                           currentDateFormatted=currentDateFormatted,
+                           datePagination=datePagination)
 
 
 def get_date_pagination(currentDate):
@@ -80,6 +91,12 @@ def google_auth_callback():
       session['credentials'] = credentials.to_json()
 
   return redirect(url_for('today'))
+
+
+@app.route('/ajax/save', methods=['POST'])
+def ajax_save():
+    model.save(dict(request.form))
+    return "true"
 
 
 if __name__ == '__main__':

@@ -86,6 +86,28 @@ jQuery(document).ready(function($){
         }
     });
     //----------------------- END POPOVER
+    //----------------------- SAVE ALL
+    $('#form-sections').on('submit', function(){
+        var save_btn = $('#save-btn');
+        save_btn.attr('disabled', 'disabled');
+
+        var save_btn_label = $('#save-btn-label');
+        save_btn_label.text("Saving...");
+
+        $.post('/ajax/save', $(this).serialize(), function(){
+            save_btn.removeAttr('disabled');
+            save_btn_label.text("Save");
+
+        });
+
+        return false;
+    });
+    //----------------------- END SAVE ALL
+    //----------------------- AUTOSAVE
+    setInterval(function(){
+        $('#form-sections').submit();
+    }, 60 * 1000); // autosave every 60 seconds
+    //----------------------- END AUTOSAVE
 
 
 });

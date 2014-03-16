@@ -1,0 +1,18 @@
+<div class="section section-text-entry" id="section-checklist">
+    <div class="section-content text-center">
+        {% for name, label, value in data.checklist %}
+            <label class="checkbox-inline">
+                <input type="checkbox" name="{{ name }}" value="1" {% if value %}checked="checked"{% endif %}> {{ label }}
+            </label>
+        {% endfor %}
+    </div>
+</div>
+
+{% for name, label, value in data.textboxes %}
+    <div class="section section-text-entry" id="section-happenings">
+        <div class="section-header">{{ label }}</div>
+        <div class="section-content">
+            <textarea class="form-control" name="{{ name }}">{{ value }}</textarea>
+        </div>
+    </div>
+{% endfor %}

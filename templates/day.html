@@ -50,7 +50,7 @@
             <div class="section-content">
                 <ul>
                     {% for event in events %}
-                    <li><time>{{ event['time'] }}</time> <a target="_blank" href="{{ event['link'] }}" data-toggle="popover" data-description="{{ event['description'] }}" data-location="{{ event['location'] }}">{{ event['title'] }}</a></li>
+                        <li><time>{{ event['time'] }}</time> <a target="_blank" href="{{ event['link'] }}" data-toggle="popover" data-description="{{ event['description'] }}" data-location="{{ event['location'] }}">{{ event['title'] }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
@@ -70,43 +70,13 @@
     </div>
 
     <div class="col-md-6">
+        <form accept-charset="utf-8" method="post" id="form-sections">
+            <input type="hidden" name="date" value="{{ currentDate.strftime("%Y-%m-%d") }}">
 
-        <div class="section section-text-entry" id="section-checklist">
-            <div class="section-content text-center">
-                <label class="checkbox-inline">
-                    <input type="checkbox" value="fast_food"> Fast Food
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" value="exercise"> Exercise
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" value="meditation"> Meditation
-                </label>
-            </div>
-        </div>
+            {{ data_template | safe }}
 
-        <div class="section section-text-entry" id="section-events">
-            <div class="section-header">Anything interesting happen today?</div>
-            <div class="section-content">
-                <textarea class="form-control" name="events"></textarea>
-            </div>
-        </div>
-
-        <div class="section section-text-entry" id="section-improvement">
-            <div class="section-header">How are you better today than you were yesterday?</div>
-            <div class="section-content">
-                <textarea class="form-control" name="improvement"></textarea>
-            </div>
-        </div>
-
-        <div class="section section-text-entry" id="section-reflections">
-            <div class="section-header">Reflections on the Day</div>
-            <div class="section-content">
-                <textarea class="form-control" name="reflections"></textarea>
-            </div>
-        </div>
-
-        <button class="btn btn-block btn-success btn-lg"><span class="glyphicon glyphicon-check"></span> Save</button>
+            <button id="save-btn" class="btn btn-block btn-success btn-lg"><span class="glyphicon glyphicon-check"></span> <span id="save-btn-label">Save</span></button>
+        </form>
     </div>
 
     <div class="col-md-3">

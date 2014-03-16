@@ -6,6 +6,11 @@ GOOGLE_API_CLIENT_ID = ""
 GOOGLE_API_CLIENT_SECRET = ""
 CACHE_EXPIRY = 15 * 60 * 60  # cache data in redis for 15 mins
 
+COUCHDB_SERVER = ""
+COUCHDB_USER = ""
+COUCHDB_PASS = ""
+COUCHDB_DB = ""
+
 try:
     from local_settings import *
 except ImportError:
