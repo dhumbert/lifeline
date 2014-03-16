@@ -125,12 +125,17 @@ class Day:
 
         return data_template
 
-    def get_formatted(self):
-        return "{} {} {}, {}".format(
-            self._date.strftime("%A"),
-            self._date.strftime("%B"),
-            self._date.strftime("%d").lstrip("0"),
-            self._date.strftime("%Y"))
+    def get_formatted(self, format=None):
+        if format:
+            formatted = self._date.strftime(format)
+        else:
+            formatted = "{} {} {}, {}".format(
+                self._date.strftime("%A"),
+                self._date.strftime("%B"),
+                self._date.strftime("%d").lstrip("0"),
+                self._date.strftime("%Y"))
+
+        return formatted
 
     def get_date_pagination(self, url_cb):
         previousDate = self._date + relativedelta(days=-1)

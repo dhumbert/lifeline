@@ -26,18 +26,18 @@ def date_view(year, month, day):
 
     dayObj = model.Day(currentDate)
 
-    datePagination = dayObj.get_date_pagination(partial(url_for, 'date_view'))
+    date_pagination = dayObj.get_date_pagination(partial(url_for, 'date_view'))
 
     notes = dayObj.get_notes()
     events = dayObj.get_events()
 
     data_template = dayObj.get_data_template(render_template)
 
-    return render_template('day.html', data_template=data_template,
+    return render_template('day.html',
+                           data_template=data_template,
                            day=dayObj,
                            notes=notes, events=events,
-                           currentDate=currentDate,
-                           datePagination=datePagination)
+                           date_pagination=date_pagination)
 
 
 

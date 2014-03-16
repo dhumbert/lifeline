@@ -27,9 +27,9 @@
 <div class="container">
     <div class="page-header">
         <div class="navigation">
-            <a href="{{ datePagination['previous'] }}" class="pull-left"><span class="glyphicon glyphicon-circle-arrow-left"></span></a>
+            <a href="{{ date_pagination['previous'] }}" class="pull-left"><span class="glyphicon glyphicon-circle-arrow-left"></span></a>
             <div class="pull-right">
-                <a class="{% if day.is_today() %}disabled{% endif %}" href="{% if day.is_today() %}#{% else %}{{ datePagination['next'] }}{% endif %}"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
+                <a class="{% if day.is_today() %}disabled{% endif %}" href="{% if day.is_today() %}#{% else %}{{ date_pagination['next'] }}{% endif %}"><span class="glyphicon glyphicon-circle-arrow-right"></span></a>
                 <a class="{% if day.is_today() %}disabled{% endif %}" href="{% if day.is_today() %}#{% else %}{{ url_for('today') }}{% endif %}" title="Today"><span class="glyphicon glyphicon-record"></span></a>
             </div>
             <div class="text-center">
@@ -71,7 +71,7 @@
 
     <div class="col-md-6">
         <form accept-charset="utf-8" method="post" id="form-sections">
-            <input type="hidden" name="date" value="{{ currentDate.strftime("%Y-%m-%d") }}">
+            <input type="hidden" name="date" value="{{ day.get_formatted("%Y-%m-%d") }}">
 
             {{ data_template | safe }}
 
