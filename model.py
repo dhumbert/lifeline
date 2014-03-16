@@ -1,9 +1,11 @@
+import json
 from flask import session, redirect, url_for
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 from evernote.edam.type.ttypes import NoteSortOrder
 from evernote.api.client import EvernoteClient
+from redis_cache import cache_it
 import settings
 
 # google api
@@ -12,6 +14,7 @@ from oauth2client.client import OAuth2Credentials
 import httplib2
 
 
+@cache_it(expire=settings.CACHE_EXPIRY)
 def get_notes(currentDate):
     searchDateLowerLimit = currentDate.strftime("%Y%m%d")
     searchDateUpperLimit = (currentDate + relativedelta(days=+1)).strftime("%Y%m%d")
@@ -29,6 +32,7 @@ def get_notes(currentDate):
     return notes
 
 
+@cache_it(expire=settings.CACHE_EXPIRY)
 def get_calendar_events(currentDate):
     # google calendar
     credentials = OAuth2Credentials.from_json(session['credentials'])

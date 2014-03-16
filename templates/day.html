@@ -70,12 +70,43 @@
     </div>
 
     <div class="col-md-6">
-        <div class="section" id="section-daily-log">
-            <div class="section-header">Daily Log</div>
-            <div class="section-content">
-                <textarea></textarea>
+
+        <div class="section section-text-entry" id="section-checklist">
+            <div class="section-content text-center">
+                <label class="checkbox-inline">
+                    <input type="checkbox" value="fast_food"> Fast Food
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" value="exercise"> Exercise
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" value="meditation"> Meditation
+                </label>
             </div>
         </div>
+
+        <div class="section section-text-entry" id="section-events">
+            <div class="section-header">Anything interesting happen today?</div>
+            <div class="section-content">
+                <textarea class="form-control" name="events"></textarea>
+            </div>
+        </div>
+
+        <div class="section section-text-entry" id="section-improvement">
+            <div class="section-header">How are you better today than you were yesterday?</div>
+            <div class="section-content">
+                <textarea class="form-control" name="improvement"></textarea>
+            </div>
+        </div>
+
+        <div class="section section-text-entry" id="section-reflections">
+            <div class="section-header">Reflections on the Day</div>
+            <div class="section-content">
+                <textarea class="form-control" name="reflections"></textarea>
+            </div>
+        </div>
+
+        <button class="btn btn-block btn-success btn-lg"><span class="glyphicon glyphicon-check"></span> Save</button>
     </div>
 
     <div class="col-md-3">
@@ -112,7 +143,7 @@
                     <div class="mood-slider"><input type="range" min="0" value="50" max="100" step="1" name=""></div>
                 </div>
 
-                <button type="button" id="save-moods-btn" class="btn btn-block btn-primary"><span class="glyphicon glyphicon-check"></span> Save</button>
+                <button type="button" id="save-moods-btn" class="btn btn-block btn-primary"><span class="glyphicon glyphicon-check"></span> Save Mood</button>
 
                 <a href="#" id="previous-moods" data-toggle="modal" data-target="#previous-mood-modal">
                     <span class="glyphicon glyphicon-repeat"></span> Previous Mood Entries</a>
