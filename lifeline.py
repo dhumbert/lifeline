@@ -82,7 +82,7 @@ def google_auth_callback():
 
 @app.route('/ajax/save', methods=['POST'])
 def ajax_save():
-    model.save(dict(request.form))
+    model.Day(request.form['date']).save(dict(request.form))
     return "true"
 
 

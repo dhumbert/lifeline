@@ -146,45 +146,40 @@ class Day:
             'next': url_cb(year=nextDate.year, month=nextDate.month, day=nextDate.day),
         }
 
+    def save(self, values):
+        values = dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
 
+        doc_id = _make_doc_id(values['date'])
 
+        db = _get_couchdb_connection()
 
+        checklist = [
+            ["fast_food", "Fast Food", 'fast_food' in values],
+            ["exercise", "Exercise", 'exercise' in values],
+            ["meditation", "Meditation", 'meditation' in values],
+        ]
 
+        textboxes = [
+            ["happenings", "Anything interesting happen today?", values['happenings']],
+            ["improvement", "How are you better today than you were yesterday?", values['improvement']],
+            ["reflection", "Reflection", values['reflection']],
+        ]
 
-def save(values):
-    values = dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
+        data = {
+            '_id': doc_id,
+            'checklist': checklist,
+            'textboxes': textboxes,
+            'events': self.get_events(),
+            'notes': self.get_notes(),
+            'format': "v1",  # to make it easy to migrate documents if structure changes
+        }
 
-    doc_id = _make_doc_id(values['date'])
+        doc = db.get(doc_id)
+        if doc and '_rev' in doc:
+            data['_rev'] = doc['_rev']
 
-    db = _get_couchdb_connection()
-
-    checklist = [
-        ["fast_food", "Fast Food", 'fast_food' in values],
-        ["exercise", "Exercise", 'exercise' in values],
-        ["meditation", "Meditation", 'meditation' in values],
-    ]
-
-    textboxes = [
-        ["happenings", "Anything interesting happen today?", values['happenings']],
-        ["improvement", "How are you better today than you were yesterday?", values['improvement']],
-        ["reflection", "Reflection", values['reflection']],
-    ]
-
-    data = {
-        '_id': doc_id,
-        'checklist': checklist,
-        'textboxes': textboxes,
-        'events': get_calendar_events(values['date']),
-        'notes': get_notes(values['date']),
-        'format': "v1",  # to make it easy to migrate documents if structure changes
-    }
-
-    doc = db.get(doc_id)
-    if doc and '_rev' in doc:
-        data['_rev'] = doc['_rev']
-
-    db.save(data)
-    invalidate_cache()
+        db.save(data)
+        invalidate_cache()
 
 
 def invalidate_cache():
