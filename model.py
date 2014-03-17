@@ -163,7 +163,6 @@ class Day:
         invalidate_cache()
 
 
-
 def invalidate_cache():
     cache = SimpleCache(hashkeys=True, namespace=invalidate_cache.__module__)
     cache.expire_all_in_set()
