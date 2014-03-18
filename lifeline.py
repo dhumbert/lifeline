@@ -105,6 +105,12 @@ def login():
     return render_template('login.html', next=request.args.get('next'))
 
 
+@app.route("/logout")
+def logout():
+    logout_user()
+    return redirect('/login')
+
+
 @app.route('/ajax/save', methods=['POST'])
 @login_required
 def ajax_save():
