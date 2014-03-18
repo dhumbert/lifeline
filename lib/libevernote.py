@@ -13,13 +13,13 @@ def get_notes(forDate):
 
     notes = []
     for note in foundNotes:
-        notes.append((note.guid, note.title))
+        notes.append((note.guid, note.title.decode('UTF-8')))
 
     return notes
 
 
 def _get_evernote_note_store():
-    client = EvernoteClient(token=settings.EVERNOTE_DEV_TOKEN)
+    client = EvernoteClient(token=settings.EVERNOTE_DEV_TOKEN, sandbox=False)
     return client.get_note_store()
 
 
