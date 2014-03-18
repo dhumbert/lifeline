@@ -215,7 +215,7 @@ def get_user(username):
 
 def authenticate(username, password):
     hashed_pass = hashlib.sha1(password).hexdigest()
-    user = User.load(username)
+    user = get_user(username)
 
     if user.password == hashed_pass:
         return user
