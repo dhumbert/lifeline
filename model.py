@@ -5,6 +5,7 @@ import couchdb
 from dateutil.relativedelta import relativedelta
 from datetime import date
 from redis_cache import cache_it, SimpleCache
+import hashlib
 import settings
 from lib import libevernote, libgcal
 
@@ -26,15 +27,17 @@ class Day:
         return db.get(_make_doc_id(self._date))
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def get_notes(self):
+    def get_notes(self, user):
         if not self.is_today():  # if it's today, keep loading fresh
             if self._data:  # if we have data in db
                 return self._data['notes']  # just return data from db
 
-        return self._get_notes_from_source()
+        return self._get_notes_from_source(user)
 
-    def _get_notes_from_source(self):
-        return libevernote.get_notes(self._date)
+    def _get_notes_from_source(self, user):
+        token = user.get_notes_token()
+        if user.note_service == "evernote":
+            return libevernote.get_notes(self._date, token)
 
     @cache_it(expire=settings.CACHE_EXPIRY)
     def get_events(self):
@@ -163,6 +166,63 @@ class Day:
         invalidate_cache()
 
 
+class User():
+    username = ""
+    password = ""
+    note_service = "evernote"
+    tokens = {}
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.username)
+
+    def set_password(self, password):
+        self.password = hashlib.sha1(password).hexdigest()
+
+    def get_notes_token(self):
+        return self.get_token("notes")
+
+    def get_token(self, key):
+        try:
+            return self.tokens[key]
+        except IndexError:
+            return None
+
+    def __repr__(self):
+        return unicode(self.username)
+
+
+@cache_it(expire=settings.CACHE_EXPIRY)
+def get_user(username):
+    db = _get_couchdb_connection(settings.COUCHDB_AUTH_DB)
+    user = db.get(username)
+    if user:
+        u = User()
+        u.username = username
+        u.password = user['password']
+        u.tokens['notes'] = user['evernote_dev_token']
+        u.note_service = "evernote"
+        return u
+
+
+def authenticate(username, password):
+    hashed_pass = hashlib.sha1(password).hexdigest()
+    user = User.load(username)
+
+    if user.password == hashed_pass:
+        return user
+
+    return None
+
+
 def invalidate_cache():
     cache = SimpleCache(hashkeys=True, namespace=invalidate_cache.__module__)
     cache.expire_all_in_set()
@@ -177,10 +237,13 @@ def _make_doc_id(date):
     return "{}/{}".format(username, date)
 
 
-def _get_couchdb_connection():
+def _get_couchdb_connection(db=None):
     couch = couchdb.Server(settings.COUCHDB_SERVER)
     couch.resource.credentials = (settings.COUCHDB_USER, settings.COUCHDB_PASS)
 
-    return couch[settings.COUCHDB_DB]
+    if not db:
+        db = settings.COUCHDB_DB
+
+    return couch[db]
 
 
