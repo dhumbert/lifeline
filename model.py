@@ -124,7 +124,6 @@ class Day:
             data['_rev'] = doc['_rev']
 
         db.save(data)
-        invalidate_cache()
 
     def save_mood(self, values):
         doc_id = _make_doc_id(self._user, values['date'])
@@ -169,7 +168,6 @@ class Day:
             self._data['_rev'] = doc['_rev']
 
         db.save(self._data)
-        invalidate_cache()
 
 
 class User():

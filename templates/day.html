@@ -54,6 +54,11 @@
 
             <button id="save-btn" class="btn btn-block btn-success btn-lg"><span class="glyphicon glyphicon-check"></span> <span id="save-btn-label">Save</span></button>
         </form>
+
+        <div class="section text-center" id="section-bottom-links">
+            <a href="#" title="Settings" data-toggle="modal" data-target="#settings-modal"><span class="glyphicon glyphicon-cog"></span></a>
+            <a href="{{ url_for('logout') }}" title="Log out"><span class="glyphicon glyphicon-log-out"></span></a>
+        </div>
     </div>
 
     <div class="col-md-3">
@@ -120,4 +125,27 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<div id="settings-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form accept-charset="UTF-8" method="post" id="settingsForm">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Settings</h4>
+            </div>
+            <div class="modal-body">
+                    <label for="settings_moods">Moods</label>
+                    <span class="help-block">Enter one mood pair per line, with each side of the mood separated by a pipe. For example, Sad|Happy</span>
+                    <textarea name="settings_moods" id="settings_moods" class="form-control">{% for mood in moods %}{{ mood[0] }}|{{ mood[1] }}
+{% endfor %}</textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button class="btn btn-primary"><span class="glyphicon glyphicon-check"></span> Save</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

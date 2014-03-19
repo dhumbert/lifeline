@@ -124,5 +124,15 @@ def ajax_save_mood():
     return "true"
 
 
+@app.route('/ajax/save-settings', methods=['POST'])
+@login_required
+def ajax_save_settings():
+    user = current_user._get_current_object()
+    moods = map(lambda x: x.strip().split("|"), filter(None, request.form['settings_moods'].split("\n")))
+    user.moods = moods
+    user.save()
+    return "true"
+
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -132,6 +132,14 @@ jQuery(document).ready(function($){
         return false;
     });
     //----------------------- END SAVE MOOD
+    //----------------------- SETTINGS FORM
+    $('#settingsForm').on('submit', function(){
+        $.post('/ajax/save-settings', $(this).serialize(), function(){
+            document.location.reload();
+        });
+        return false;
+    });
+    //----------------------- END SETTINGS FORM
     //----------------------- AUTOSAVE
 //    setInterval(function(){
 //        $('#form-sections').submit();

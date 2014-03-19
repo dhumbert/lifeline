@@ -110,3 +110,16 @@
 #previous-mood-time-next {
 	margin-left: 1em;
 }
+
+#section-bottom-links {
+    margin-top: 1em;
+}
+
+#section-bottom-links a {
+    font-size: 2em;
+    color: #999;
+}
+
+#settings_moods {
+    height: 8em;
+}
