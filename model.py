@@ -234,8 +234,7 @@ def get_user(username):
         u._rev = user['_rev']
         u.username = username
         u.password = user['password']
-        u.tokens['evernote'] = user['tokens']['evernote']
-        u.tokens['gcal'] = user['tokens']['gcal']
+        u.tokens = user['tokens']
         u.note_service = user['note_service']
         u.calendar_service = user['calendar_service']
         return u
