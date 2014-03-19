@@ -117,6 +117,7 @@ class Day:
             'events': self.get_events(),
             'notes': self.get_notes(),
             'format': "v1",  # to make it easy to migrate documents if structure changes
+            'moods': self._data['moods'],
         }
 
         doc = db.get(doc_id)
