@@ -25,7 +25,6 @@ class Day:
     def is_today(self):
         return self._date == date.today()
 
-    @cache_it(expire=settings.CACHE_EXPIRY)
     def _load_data_from_db(self):
         db = _get_couchdb_connection()
         return db.get(_make_doc_id(self._user, self._date))
