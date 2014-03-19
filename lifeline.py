@@ -33,12 +33,12 @@ def today():
 def date_view(year, month, day):
     currentDate = dateutil.parser.parse("{}-{}-{}".format(year, month, day), yearfirst=True).date()
 
-    dayObj = model.Day(currentDate)
+    dayObj = model.Day(current_user._get_current_object(), currentDate)
 
     date_pagination = dayObj.get_date_pagination(partial(url_for, 'date_view'))
-    notes = dayObj.get_notes(current_user._get_current_object())
+    notes = dayObj.get_notes()
     try:
-        events = dayObj.get_events(current_user._get_current_object())
+        events = dayObj.get_events()
     except:
         return redirect(url_for('google_auth'))
 
@@ -111,14 +111,16 @@ def logout():
 @app.route('/ajax/save', methods=['POST'])
 @login_required
 def ajax_save():
-    model.Day(request.form['date']).save(current_user._get_current_object(), dict(request.form))
+    user = current_user._get_current_object()
+    model.Day(user, request.form['date']).save(dict(request.form))
     return "true"
 
 
 @app.route('/ajax/save-mood', methods=['POST'])
 @login_required
 def ajax_save_mood():
-    model.Day(request.form['date']).save_mood(current_user._get_current_object(), dict(request.form))
+    user = current_user._get_current_object()
+    model.Day(user, request.form['date']).save_mood(dict(request.form))
     return "true"
 
 

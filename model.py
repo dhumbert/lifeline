@@ -12,10 +12,13 @@ from lib import libevernote, libgcal
 
 
 class Day:
-    def __init__(self, currentDate):
+    _user = None
+
+    def __init__(self, user, currentDate):
         if isinstance(currentDate, (str, unicode)):
             currentDate = dateutil.parser.parse(currentDate).date()
 
+        self._user = user
         self._date = currentDate
         self._data = self._load_data_from_db()
 
@@ -23,34 +26,34 @@ class Day:
         return self._date == date.today()
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def _load_data_from_db(self, user):
+    def _load_data_from_db(self):
         db = _get_couchdb_connection()
-        return db.get(_make_doc_id(user, self._date))
+        return db.get(_make_doc_id(self._user, self._date))
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def get_notes(self, user):
+    def get_notes(self):
         if not self.is_today():  # if it's today, keep loading fresh
             if self._data:  # if we have data in db
                 return self._data['notes']  # just return data from db
 
-        return self._get_notes_from_source(user)
+        return self._get_notes_from_source()
 
-    def _get_notes_from_source(self, user):
-        token = user.get_notes_token()
-        if user.note_service == "evernote":
+    def _get_notes_from_source(self):
+        token = self._user.get_notes_token()
+        if self._user.note_service == "evernote":
             return libevernote.get_notes(self._date, token)
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def get_events(self, user):
+    def get_events(self):
         if not self.is_today():  # if it's today, keep loading fresh
             if self._data:  # if we have data in db
                 return self._data['events']  # just return data from db
 
-        return self._get_events_from_source(user)
+        return self._get_events_from_source()
 
-    def _get_events_from_source(self, user):
-        token = user.get_calendar_token()
-        if user.calendar_service == "gcal":
+    def _get_events_from_source(self):
+        token = self._user.get_calendar_token()
+        if self._user.calendar_service == "gcal":
             return libgcal.get_events(self._date, token)
 
     def get_moods(self):
@@ -88,10 +91,10 @@ class Day:
             'next': url_cb(year=nextDate.year, month=nextDate.month, day=nextDate.day),
         }
 
-    def save(self, user, values):
+    def save(self, values):
         values = _unpack_form_data(values)
 
-        doc_id = _make_doc_id(user, values['date'])
+        doc_id = _make_doc_id(self._user, values['date'])
 
         db = _get_couchdb_connection()
 
@@ -111,8 +114,8 @@ class Day:
             '_id': doc_id,
             'checklist': checklist,
             'textboxes': textboxes,
-            'events': self.get_events(user),
-            'notes': self.get_notes(user),
+            'events': self.get_events(),
+            'notes': self.get_notes(),
             'format': "v1",  # to make it easy to migrate documents if structure changes
         }
 
@@ -123,8 +126,8 @@ class Day:
         db.save(data)
         invalidate_cache()
 
-    def save_mood(self, user, values):
-        doc_id = _make_doc_id(user, values['date'])
+    def save_mood(self, values):
+        doc_id = _make_doc_id(self._user, values['date'])
         values = _unpack_form_data(values)
 
         del values['date']
