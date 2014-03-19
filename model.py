@@ -179,6 +179,7 @@ class User():
     note_service = "evernote"
     calendar_service = "gcal"
     tokens = {}
+    moods = []
 
     def is_authenticated(self):
         return True
@@ -215,6 +216,7 @@ class User():
             'tokens': self.tokens,
             'calendar_service': self.calendar_service,
             'note_service': self.note_service,
+            'moods': self.moods,
         }
 
     def save(self):
@@ -238,6 +240,7 @@ def get_user(username):
         u.tokens = user['tokens']
         u.note_service = user['note_service']
         u.calendar_service = user['calendar_service']
+        u.moods = user['moods']
         return u
 
 

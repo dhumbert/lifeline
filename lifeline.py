@@ -50,7 +50,7 @@ def date_view(year, month, day):
                            day=dayObj,
                            notes=notes, events=events,
                            date_pagination=date_pagination,
-                           moods=settings.MOODS)
+                           moods=current_user.moods)
 
 
 @app.route('/google-auth')
