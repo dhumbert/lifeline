@@ -4,6 +4,7 @@ jQuery(document).ready(function($){
     if (previousMoods.length) {
         var last = previousMoods.last();
         last.removeClass('hide').addClass('active');
+        $('#previous-mood-time-previous').removeClass('disabled');
         $('#previous-mood-time').find('time').text(last.data('time'));
         $('#previous-moods').removeClass('hide');
     }
