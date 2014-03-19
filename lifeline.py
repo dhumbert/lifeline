@@ -37,7 +37,11 @@ def date_view(year, month, day):
 
     date_pagination = dayObj.get_date_pagination(partial(url_for, 'date_view'))
     notes = dayObj.get_notes(current_user._get_current_object())
-    events = dayObj.get_events()
+    try:
+        events = dayObj.get_events(current_user._get_current_object())
+    except:
+        return redirect(url_for('google_auth'))
+
 
     data_template = dayObj.get_data_template(render_template)
 
@@ -49,11 +53,9 @@ def date_view(year, month, day):
                            moods=settings.MOODS)
 
 
-
 @app.route('/google-auth')
 @login_required
 def google_auth():
-    # google api
     # change redirect uri: https://console.developers.google.com/project/667824890122/apiui/credential
     flow = OAuth2WebServerFlow(
         client_id=settings.GOOGLE_API_CLIENT_ID,
@@ -78,15 +80,10 @@ def google_auth_callback():
                                    settings.GOOGLE_API_CLIENT_SECRET,
                                    "https://www.googleapis.com/auth/calendar")
         flow.redirect_uri = request.base_url
-        try:
-            credentials = flow.step2_exchange(code)
-        except Exception as e:
-            print "Unable to get an access token because ", e.message
+        credentials = flow.step2_exchange(code)
 
-        # store these credentials for the current user in the session
-        # This stores them in a cookie, which is insecure. Update this
-        # with something better if you deploy to production land
-        session['credentials'] = credentials.to_json()
+        current_user.tokens['gcal'] = credentials.to_json()
+        current_user.save()
 
     return redirect(url_for('today'))
 

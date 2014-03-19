@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import date
 from redis_cache import cache_it, SimpleCache
 import hashlib
+import json
 import settings
 from lib import libevernote, libgcal
 
@@ -40,15 +41,17 @@ class Day:
             return libevernote.get_notes(self._date, token)
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def get_events(self):
+    def get_events(self, user):
         if not self.is_today():  # if it's today, keep loading fresh
             if self._data:  # if we have data in db
                 return self._data['events']  # just return data from db
 
-        return self._get_events_from_source()
+        return self._get_events_from_source(user)
 
-    def _get_events_from_source(self):
-        return libgcal.get_events(self._date, session['credentials'])
+    def _get_events_from_source(self, user):
+        token = user.get_calendar_token()
+        if user.calendar_service == "gcal":
+            return libgcal.get_events(self._date, token)
 
     def get_moods(self):
         if self._data and 'moods' in self._data:
@@ -167,9 +170,11 @@ class Day:
 
 
 class User():
+    _rev = ""
     username = ""
     password = ""
     note_service = "evernote"
+    calendar_service = "gcal"
     tokens = {}
 
     def is_authenticated(self):
@@ -188,13 +193,30 @@ class User():
         self.password = hashlib.sha1(password).hexdigest()
 
     def get_notes_token(self):
-        return self.get_token("notes")
+        return self.get_token(self.note_service)
+
+    def get_calendar_token(self):
+        return self.get_token(self.calendar_service)
 
     def get_token(self, key):
         try:
             return self.tokens[key]
         except IndexError:
             return None
+
+    def as_dict(self):
+        return {
+            '_rev': self._rev,
+            '_id': self.username,
+            'password': self.password,
+            'tokens': self.tokens,
+            'calendar_service': self.calendar_service,
+            'note_service': self.note_service,
+        }
+
+    def save(self):
+        db = _get_couchdb_connection(settings.COUCHDB_AUTH_DB)
+        db.save(self.as_dict())
 
     def __repr__(self):
         return unicode(self.username)
@@ -206,10 +228,13 @@ def get_user(username):
     user = db.get(username)
     if user:
         u = User()
+        u._rev = user['_rev']
         u.username = username
         u.password = user['password']
-        u.tokens['notes'] = user['evernote_dev_token']
-        u.note_service = "evernote"
+        u.tokens['evernote'] = user['tokens']['evernote']
+        u.tokens['gcal'] = user['tokens']['gcal']
+        u.note_service = user['note_service']
+        u.calendar_service = user['calendar_service']
         return u
 
 
@@ -217,7 +242,7 @@ def authenticate(username, password):
     hashed_pass = hashlib.sha1(password).hexdigest()
     user = get_user(username)
 
-    if user.password == hashed_pass:
+    if user and user.password == hashed_pass:
         return user
 
     return None
