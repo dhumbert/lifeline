@@ -111,14 +111,14 @@ def logout():
 @app.route('/ajax/save', methods=['POST'])
 @login_required
 def ajax_save():
-    model.Day(request.form['date']).save(current_user, dict(request.form))
+    model.Day(request.form['date']).save(current_user._get_current_object(), dict(request.form))
     return "true"
 
 
 @app.route('/ajax/save-mood', methods=['POST'])
 @login_required
 def ajax_save_mood():
-    model.Day(request.form['date']).save_mood(current_user, dict(request.form))
+    model.Day(request.form['date']).save_mood(current_user._get_current_object(), dict(request.form))
     return "true"
 
 
