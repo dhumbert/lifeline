@@ -220,6 +220,7 @@ class User():
     def save(self):
         db = _get_couchdb_connection(settings.COUCHDB_AUTH_DB)
         db.save(self.as_dict())
+        invalidate_cache()
 
     def __repr__(self):
         return unicode(self.username)
