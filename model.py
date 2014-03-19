@@ -111,8 +111,8 @@ class Day:
             '_id': doc_id,
             'checklist': checklist,
             'textboxes': textboxes,
-            'events': self.get_events(),
-            'notes': self.get_notes(),
+            'events': self.get_events(self),
+            'notes': self.get_notes(self),
             'format': "v1",  # to make it easy to migrate documents if structure changes
         }
 
