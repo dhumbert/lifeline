@@ -23,9 +23,9 @@ class Day:
         return self._date == date.today()
 
     @cache_it(expire=settings.CACHE_EXPIRY)
-    def _load_data_from_db(self):
+    def _load_data_from_db(self, user):
         db = _get_couchdb_connection()
-        return db.get(_make_doc_id(self._date))
+        return db.get(_make_doc_id(user, self._date))
 
     @cache_it(expire=settings.CACHE_EXPIRY)
     def get_notes(self, user):
@@ -88,10 +88,10 @@ class Day:
             'next': url_cb(year=nextDate.year, month=nextDate.month, day=nextDate.day),
         }
 
-    def save(self, values):
+    def save(self, user, values):
         values = _unpack_form_data(values)
 
-        doc_id = _make_doc_id(values['date'])
+        doc_id = _make_doc_id(user, values['date'])
 
         db = _get_couchdb_connection()
 
@@ -111,8 +111,8 @@ class Day:
             '_id': doc_id,
             'checklist': checklist,
             'textboxes': textboxes,
-            'events': self.get_events(self),
-            'notes': self.get_notes(self),
+            'events': self.get_events(user),
+            'notes': self.get_notes(user),
             'format': "v1",  # to make it easy to migrate documents if structure changes
         }
 
@@ -123,8 +123,8 @@ class Day:
         db.save(data)
         invalidate_cache()
 
-    def save_mood(self, values):
-        doc_id = _make_doc_id(values['date'])
+    def save_mood(self, user, values):
+        doc_id = _make_doc_id(user, values['date'])
         values = _unpack_form_data(values)
 
         del values['date']
@@ -257,9 +257,8 @@ def _unpack_form_data(values):
     return dict((k, v[0]) for k, v in values.iteritems())  # each value is a list, pop the first off
 
 
-def _make_doc_id(date):
-    username = "dhumbert"
-    return "{}/{}".format(username, date)
+def _make_doc_id(user, date):
+    return "{}/{}".format(user.username, date)
 
 
 def _get_couchdb_connection(db=None):
